@@ -1,0 +1,33 @@
+gfsRealGribDown2CSV<-function(abbrevs='gfs_0p25', ftime=NULL, variablesX= c('TMP', 'HGT'), levelsX=c('500_mb', '700_mb'),  grb.domainX=c(110,130,40,20), pred_beg=3, pred_end=50,Removegrbfiles=TRUE)
+{	
+  #下载NOMADS预报资料并转成csv文件
+	if(is.null(ftime)){
+         urls.out<-CrawlModels(abbrevs,depth=2) #获取最新资料地址       
+         ftime<-substring(urls.out[1],nchar(urls.out[1])-12) #该时次模式起报UTC
+         ftime<-paste0(substr(ftime,1,8),substr(ftime,12,13))       
+      }else{
+         #获取指定参数的资料地址
+         urls.out<-"https://nomads.ncep.noaa.gov/cgi-bin/filter_"            urls.out<-paste0(urls.out,abbrevs,".pl?dir=%2Fgfs.",substr(ftime,1,8),"%2F",substr(ftime,9,10))       
+      }
+    model.parameters<-ParseModelPage(urls.out[1])  #模式资料选择参数
+	filenameA.list<-NULL  #下载的文件名（本地grib文件）
+	for(i in pred_beg:pred_end) 
+	{ grib.info<-GribGrab(model.url=urls.out[1], preds= model.parameters$pred[i], levels=levelsX, variables=variablesX, model.domain=grb.domainX)
+	   filenameA.list<-c(filenameA.list,grib.info[[1]]$file.name)
+	}
+	#write(filenameA.list,file="grbfiles.dat")
+
+	#把grb文件转成csv时，设定的文件名（“***.grb”-》“***.csv”）
+	sub_csv<-function(a,b) {return(paste0(substr(a,1,nchar(a)-3),b,".csv"))}
+      fileA.csv<-sapply(filenameA.list,sub_csv,b=ftime)
+
+	#生成csv文件
+	for( f in filenameA.list )
+	{  Grb2CsvCmd<-paste("wgrib2",f,"-csv",fileA.csv[f])
+	   shell(Grb2CsvCmd)
+	   if(Removegrbfiles) file.remove(f) #删除grb文件
+	}
+ 
+	write(fileA.csv,file=paste0("fileAcsv",ftime,".dat"))
+      return(fileA.csv)  #返回csv文件名向量
+}
