@@ -1,0 +1,15 @@
+stfdf_contour<-function(stfdf,t,k,nlevels=10,fillCol=F,cols=rainbow,main=NULL){
+	#stfdf资料中的单时次平面图
+	#第t个时次  选择第k个要素
+	x<-as.numeric(levels(as.factor(stfdf@sp@coords[,1])))
+	y<-as.numeric(levels(as.factor(stfdf@sp@coords[,2])))
+
+	data<-stfdf[,t,k]@data[[1]]  #返回类型为向量，而非数据框
+	data.mat<-matrix(data,nrow=length(y),ncol=length(x))
+      if(fillCol){
+         filled.contour(xlab='lon',x,ylab='lat',y,z=data.mat,nlevels=nlevels,
+             color.palette=cols,main=main) 
+      }else{
+	   contour(xlab='lon',x,ylab='lat',y,z=data.mat,nlevels=nlevels,main=main) #白描
+      }
+}
