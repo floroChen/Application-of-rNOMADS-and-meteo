@@ -1,0 +1,41 @@
+csv2stDataList<-function(csvfiles)
+#将csvfiles中指定的csv资料（grb转）转成数据框列表，成员名称为对应时间
+#每个成员数据框的第1、2列为空间格点编号和时间
+#格点空间信息在列表最后的Grib_Points成员中
+{
+	grb_sp<-NULL  #格点空间
+	grb_data_list<-NULL #预报资料列表，每成员为一个时次的预报要素数据框
+
+	for(i in 1:length(csvfiles))
+	{  Data<-read.csv(csvfiles[i],header=F)
+
+	   grb_data<-NULL #本时次数据
+	   fs<-levels(Data[[3]])  #要素个数
+	   for(j in 1:length(fs))
+	   {  Data2<-Data[(Data[,3]==fs[j]),]
+
+	      fc<-levels(Data2[[4]])  #层次数量
+	      for( k in 1:length(fc))
+	      {  Data3<-Data2[(Data2[,4]==fc[k]),]
+	         if(is.null(grb_data))        
+	         { grb_data<-Data3[,c(2,7)]  #首组要素，保留时间栏
+	           colnames(grb_data)<-c("time",paste(fs[j],fc[k],sep='_'))
+	         }
+	         else
+	     	   { grb_data<-cbind(grb_data,xs=Data3[,7])   #要素追加
+	           colnames(grb_data)[ncol(grb_data)]<-paste(fs[j],fc[k],sep='_')
+	         }         
+	      }
+	   }
+
+       grb_data<-cbind(Pts_id=1:nrow(grb_data), grb_data) #第1列为格点序号
+       grb_data_list=c(grb_data_list,tx=list(grb_data))
+	   names(grb_data_list)[length(grb_data_list)]<-as.character(Data[1,2])
+	}
+	 if(is.null(grb_sp))
+	 {  grb_sp<-Data3[,5:6]   #格点空间
+          grb_sp<-cbind(Pts_id=1:nrow(grb_sp), grb_sp)
+	 }
+	grb_data_list=c(grb_data_list, Grib_Points=list(grb_sp))	
+	return(grb_data_list)
+}
