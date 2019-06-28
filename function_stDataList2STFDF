@@ -1,0 +1,15 @@
+stDataList2STFDF<-function(df_list)
+{
+	n<-length(df_list)
+	stDF<-df_list[[n]] #格点空间信息，列序：stid,lon,lat,...
+
+#转成长表格
+	meteoDF<-do.call("rbind",df_list[1:(n-1)]) #列序：stid、time、属性要素...
+
+    #如果有温度数据，则将绝对温标转成摄氏
+	meteoDF.cnames<-colnames(meteoDF)
+	meteoDF[,grep("TMP|TMIN|TMAX",meteoDF.cnames,value=T)]<-meteoDF[,grep("TMP|TMIN|TMAX",meteoDF.cnames,value=T)]-273.16
+	  #转成STFDF
+      meteoDF.STFDF<-meteo2STFDF(obs=meteoDF,stations=stDF)
+      return(meteoDF.STFDF)
+}
