@@ -1,0 +1,35 @@
+csv2micapsData<-function(data=NULL,vars,levels,file=NULL){
+#data——wgrib转成的csv数据，file为所存文件   
+#转成micaps第4类格点数据格式
+    if(is.null(data)&& is.null(file)) stop("data或file之一必须赋值。")
+    if(is.null(data))
+        data<-read.csv(file,header=F)
+    data<-subset(data,V3==vars & V4==levels)
+    data<-data[order(data[,6],decreasing=T),]  #纬度按降序排列
+    #data<-data[order(data[,5]),]  #先纬度后经度
+
+    #文件头：YYYY,MM,DD
+    str_data<-paste(strsplit(substr(data[1,1],1,10),split='-')[[1]],collapse=' ')
+    #时次、时效
+    str_data<-paste(str_data,substr(data[1,1],12,13),substr(data[1,2],12,13))
+    str_data<-paste('diamond 4',paste0(vars,'-',gsub(pattern=' ',replacement='_',levels)),str_data)
+    lev<-as.numeric(strsplit(levels,split=' ')[[1]])[1]
+    if(is.na(lev)) str_data<-paste(str_data,'9999')
+        else  str_data<-paste(str_data,lev)
+    #经纬度
+    lon<-data[,5]
+    lat<-data[,6]
+    nlon<-nlevels(as.factor(lon))
+    nlat<-nlevels(as.factor(lat))
+    domain<- paste((max(lon)-min(lon))/(nlon-1),(min(lat)-max(lat))/(nlat-1),
+          min(lon),max(lon),max(lat),min(lat),nlon,nlat)
+    a<-floor(min(data[,7])/10)*10
+    b<-floor(max(data[,7])/10)*10
+    str_data<-paste(str_data,domain,10,a,b,1,0,'\n')
+    fn<-paste0(vars,'_',gsub(pattern=' ',replacement='_',levels),'_',substr(data[1,1],1,10),'.txt')
+    m<-matrix(data[,7],nrow=nlon,ncol=nlat,byrow=T)  #先纬度后经度
+    m<-paste(as.vector(t(m)),collapse=' ')
+    
+write(paste(str_data,m),file=fn) 
+return(fn)   #返回Micaps文件名
+}
