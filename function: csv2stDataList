@@ -14,7 +14,7 @@ csv2stDataList<-function(csvfiles)
 	   for(ys in fs)
 	   {  Data2<-Data[(Data[,3]==ys),]
 
-	      fc<-levels(Data2[[4]])  #层次数量
+	      fc<-unique(Data2[[4]])  #涉及的层次数量
 	      for( cc in fc)
 	      {  Data3<-Data2[(Data2[,4]==cc),]
 	         if(is.null(grb_data))        
